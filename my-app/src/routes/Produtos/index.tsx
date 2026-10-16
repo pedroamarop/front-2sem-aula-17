@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { TipoProduto } from "../../types/types";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { FaRegEdit as Editar} from "react-icons/fa";
 import { RiDeleteBinLine as Excluir} from "react-icons/ri";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Produtos() {
 
@@ -13,16 +15,18 @@ export default function Produtos() {
  
         const carregarProdutos = async ()=>{
             try {
-                const resposta = await fetch("http://localhost:3001/produtos");
+                const resposta = await fetch(API_URL);
 
                 if(!resposta.ok){
                     throw new Error(`Erro no fetch da resposta dos produtos: ${resposta.status} - ${resposta.statusText}`);
                 }
 
-                const data:TipoProduto[] = await resposta.json();
-                console.log(data);
-                setProduto(data);
+                const { data , status } = await resposta.json();
 
+                if(status === "error"){
+                    throw new Error("A resposta da API não contém a propriedade 'produtos'")
+                }
+                setProduto(data);
             } catch (error) {
                 console.error(error);
             }
@@ -32,8 +36,6 @@ export default function Produtos() {
         carregarProdutos();
 
     },[]);
-
-    const navigate = useNavigate();
 
     const modalInfo = useRef<HTMLDialogElement>(null);
 
@@ -46,18 +48,22 @@ export default function Produtos() {
 
     const handleDelete = async()=>{
         try {
-            
-            const response = await fetch(`http://localhost:3001/produtos/${idExclusao}`,
-                {method:"DELETE"});
+            const response = await fetch(API_URL,
+                {    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain;charset=UTF-8",
+                    },
+                    body: JSON.stringify({action: "DELETE", id: idExclusao})
+                });
 
                 //ERRO
-                if(!response.ok){
+                if(!response.ok) {
                     throw new Error(`Ocorreu um erro na exclusão do produto: ${response.status} - ${response.statusText}`);
                 }
 
                 //SUCESSO
-                alert("Produto excluído com sucesso!");
-                navigate("/");
+                alert("Produto excluido com sucesso!");
+                setProduto(produtos.filter((p)=> p.id !== idExclusao));
 
         } catch (error) {
             console.error(error)
@@ -82,6 +88,7 @@ export default function Produtos() {
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>IMAGEM</th>
                         <th>NOME</th>
                         <th>PREÇO</th>
                         <th>ESTOQUE</th>
@@ -93,6 +100,7 @@ export default function Produtos() {
 
                             <tr key={p.id}>
                                 <td>{p.id}</td>
+                                <td><img src={p.avatar} alt={p.nome} width={50} /></td>
                                 <td>{p.nome}</td>
                                 <td>{p.preco}</td>
                                 <td>{p.estoque}</td>
@@ -105,7 +113,7 @@ export default function Produtos() {
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colSpan={5}>Quantidade de Produtos: {produtos.length}</td>
+                        <td colSpan={6}>Quantidade de Produtos: {produtos.length}</td>
                     </tr>
                 </tfoot>
             </table>
