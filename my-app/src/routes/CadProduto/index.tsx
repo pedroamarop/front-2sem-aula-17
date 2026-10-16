@@ -1,25 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import type { TipoProduto } from "../../types/types";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function CadProduto() {
-  document.title = "Cadastrar Produtos";
+
+  useEffect(()=>{
+    document.title = "Cadastrar Produtos";
+  },[]);
 
   const navigate = useNavigate();
 
   //Recipiente onde irei guardar a lista de produtos
-  const [produto, setProduto] = useState<TipoProduto>({ id: "", nome: "", preco: 0, estoque: 0 });
+  const [produto, setProduto] = useState<TipoProduto>({ id: "", nome: "", preco: 0, estoque: 0, avatar: "" });
 
 
   const handleSubmit = async () => {
     try {
 
-      const response = await fetch(`http://localhost:3001/produtos/`, {
+      const response = await fetch(API_URL, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "text/plain;charset=UTF-8"
         },
-        body: JSON.stringify(produto)
+        body: JSON.stringify({ action: "POST", ...produto })
       });
 
       if (!response.ok) {
@@ -77,6 +82,18 @@ export default function CadProduto() {
                 value={produto.estoque}
                 onChange={(e) =>
                   setProduto({ ...produto, estoque: parseInt(e.target.value) })
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="avatar">Imagem do Produto </label>
+              <input
+                type="text"
+                name="avatar"
+                id="avatar"
+                value={produto.avatar}
+                onChange={(e) =>
+                  setProduto({ ...produto, avatar: e.target.value })
                 }
               />
             </div>

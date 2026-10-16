@@ -26,7 +26,9 @@ type TipoUsuarioGit = {
 export default function Home() {
 
     //Modificar o título da página;
-    document.title = "Home";
+    useEffect(()=>{
+        document.title = "Home";
+    },[]);
 
     const [usuarios, setUsuarios] = useState<TipoUsuarioGit[]>([]);
 
