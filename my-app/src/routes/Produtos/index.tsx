@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { TipoProduto } from "../../types/types";
-import { Link } from "react-router";
+import { Link} from "react-router";
 import { FaRegEdit as Editar} from "react-icons/fa";
 import { RiDeleteBinLine as Excluir} from "react-icons/ri";
 
@@ -9,7 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 export default function Produtos() {
 
     //Recipiente onde irei guardar a lista de produtos
-    const[produtos,setProduto] = useState<TipoProduto[]>([]);
+    const[produtos,setProdutos] = useState<TipoProduto[]>([]);
 
     useEffect( ()=>{
  
@@ -21,12 +21,14 @@ export default function Produtos() {
                     throw new Error(`Erro no fetch da resposta dos produtos: ${resposta.status} - ${resposta.statusText}`);
                 }
 
-                const { data , status } = await resposta.json();
+                const { data,status } = await resposta.json();
 
                 if(status === "error"){
-                    throw new Error("A resposta da API não contém a propriedade 'produtos'")
+                    throw new Error("A resposta da API não contém a propriedade 'produtos'");
                 }
-                setProduto(data);
+                
+                setProdutos(data);
+
             } catch (error) {
                 console.error(error);
             }
@@ -48,22 +50,31 @@ export default function Produtos() {
 
     const handleDelete = async()=>{
         try {
+            
             const response = await fetch(API_URL,
-                {    method: "POST",
+                {   method:"POST",
                     headers: {
                         "Content-Type": "text/plain;charset=UTF-8",
                     },
-                    body: JSON.stringify({action: "DELETE", id: idExclusao})
+                    body: JSON.stringify({action:"DELETE", id:idExclusao})
                 });
 
                 //ERRO
-                if(!response.ok) {
+                if(!response.ok){
                     throw new Error(`Ocorreu um erro na exclusão do produto: ${response.status} - ${response.statusText}`);
                 }
 
+                const { status } = await response.json();
+
+                if(status === "error"){
+                    throw new Error("A resposta da API não contém a propriedade 'status'");
+                }
+
                 //SUCESSO
-                alert("Produto excluido com sucesso!");
-                setProduto(produtos.filter((p)=> p.id !== idExclusao));
+                modalInfo.current?.close();
+                alert("Produto excluído com sucesso!");
+                //Atualiza a lista de produtos removendo o produto excluído e atualizando o estado do componente filtrando o array de produtos para remover o produto com o idExclusao.
+                setProdutos( produtos.filter( (p)=> p.id !== idExclusao ) );
 
         } catch (error) {
             console.error(error)
@@ -86,12 +97,12 @@ export default function Produtos() {
 
             <table className="tblProduto">
                 <thead>
-                    <tr>
+                    <tr> 
                         <th>ID</th>
-                        <th>IMAGEM</th>
                         <th>NOME</th>
                         <th>PREÇO</th>
                         <th>ESTOQUE</th>
+                        <th>AVATAR</th>
                         <th>AÇÕES</th>
                     </tr>
                 </thead>
@@ -100,10 +111,12 @@ export default function Produtos() {
 
                             <tr key={p.id}>
                                 <td>{p.id}</td>
-                                <td><img src={p.avatar} alt={p.nome} width={50} /></td>
                                 <td>{p.nome}</td>
                                 <td>{p.preco}</td>
                                 <td>{p.estoque}</td>
+                                <td>
+                                    <img src={p.avatar} alt={p.nome} width="50" />
+                                </td>
                                 <td>
                                     <Link to={`/editar-produtos/${p.id}`}> <Editar/> </Link>  | 
                                     <Link to="#" onClick={()=> abrirModal(p.id)}> <Excluir/> </Link>
